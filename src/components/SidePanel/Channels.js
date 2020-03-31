@@ -24,43 +24,39 @@ function Channels({
   const [notifications, setNotifications] = React.useState([]);
   const [firstLoad, setFirstLoad] = React.useState(true);
 
-  React.useEffect(() => {
-    if (channel && currentChannel) {
-      firestore
-        .collection('channels')
-        .doc(channel.id)
-        .collection('messages')
-        .onSnapshot(snapShot => {
-          if (channel) {
-            let lastTotal = 0;
-            let index = notifications.findIndex(
-              notification => notification.id === channel.id
-            );
+  if (channel && currentChannel) {
+    firestore
+      .collection('channels')
+      .doc(channel.id)
+      .collection('messages')
+      .onSnapshot(snapShot => {
+        let lastTotal = 0;
+        let index = notifications.findIndex(
+          notification => notification.id === channel.id
+        );
+        console.log(index);
+        console.log(lastTotal);
+        if (index !== -1) {
+          if (channel.id !== currentChannel.id) {
+            lastTotal = notifications[index].total;
 
-            if (index !== -1) {
-              if (channel.id !== currentChannel.id) {
-                lastTotal = notifications[index].total;
-              }
-              if (snapShot.docChanges().length - lastTotal > 0) {
-                notifications[index].count =
-                  snapShot.docChanges().length - lastTotal;
-              }
-              notifications[
-                index
-              ].lastKnownTotal = snapShot.docChanges().length;
-            } else {
-              notifications.push({
-                id: channel.id,
-                total: snapShot.docChanges().length,
-                lastKnownTotal: snapShot.docChanges().length,
-                count: 0
-              });
+            if (snapShot.docChanges().length - lastTotal > 0) {
+              notifications[index].count =
+                snapShot.docChanges().length - lastTotal;
             }
-            setNotifications(notifications);
           }
-        });
-    }
-  });
+          notifications[index].lastKnownTotal = snapShot.docChanges().length;
+        } else {
+          notifications.push({
+            id: channel.id,
+            total: snapShot.docChanges().length,
+            lastKnownTotal: snapShot.docChanges().length,
+            count: 0
+          });
+        }
+        setNotifications(notifications);
+      });
+  }
 
   React.useEffect(() => {
     fetchCollectionsStartAsync();
@@ -96,19 +92,20 @@ function Channels({
     };
     setFirstChannel();
 
-    console.log(notifications);
-
     const getNotificationsCount = channel => {
       let count = 0;
-      notifications.forEach(notification => {
-        if (notification.id === channel.id) {
-          count = notification.count;
-        }
-      });
+      if (channel) {
+        notifications.forEach(notification => {
+          if (notification.id === channel.id) {
+            count = notification.count;
+          }
+        });
+      }
       if (count > 0) {
         return count;
       }
     };
+    console.log(getNotificationsCount());
     return (
       <React.Fragment>
         <div className="row">
@@ -143,7 +140,9 @@ function Channels({
                 >
                   #{channel.name}
                   {getNotificationsCount(channel) && (
-                    <p className="text-warning">{getNotificationsCount}</p>
+                    <p className="text-warning">
+                      {getNotificationsCount(channel)}
+                    </p>
                   )}
                 </a>
               ))}
