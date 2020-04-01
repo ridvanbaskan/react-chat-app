@@ -139,11 +139,14 @@ function Channels({
                   onClick={() => changeChannel(channel)}
                 >
                   #{channel.name}
-                  {getNotificationsCount(channel) && (
-                    <p className="text-warning">
-                      {getNotificationsCount(channel)}
-                    </p>
-                  )}
+                  {notifications &&
+                    notifications.forEach(notification => {
+                      if (notification.id === channel.id) {
+                        return (
+                          <p className="text-warning">{notification.count}</p>
+                        );
+                      }
+                    })()}
                 </a>
               ))}
           </div>
