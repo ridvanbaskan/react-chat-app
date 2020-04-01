@@ -146,7 +146,7 @@ function Channels({
                           <p className="text-warning">{notification.count}</p>
                         );
                       }
-                    })()}
+                    })}
                 </a>
               ))}
           </div>
