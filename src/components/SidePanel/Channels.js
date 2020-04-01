@@ -81,6 +81,21 @@ function Channels({
     }
   };
 
+  const getNotificationsCount = channel => {
+    let count = 0;
+    if (channel) {
+      notifications.forEach(notification => {
+        if (notification.id === channel.id) {
+          count = notification.count;
+        }
+      });
+    }
+    if (count > 0) {
+      return count;
+    }
+  };
+  console.log(getNotificationsCount());
+
   if (allChannels) {
     const setFirstChannel = () => {
       const firstChannel = allChannels[0];
@@ -92,20 +107,6 @@ function Channels({
     };
     setFirstChannel();
 
-    const getNotificationsCount = channel => {
-      let count = 0;
-      if (channel) {
-        notifications.forEach(notification => {
-          if (notification.id === channel.id) {
-            count = notification.count;
-          }
-        });
-      }
-      if (count > 0) {
-        return count;
-      }
-    };
-    console.log(getNotificationsCount());
     return (
       <React.Fragment>
         <div className="row">
@@ -139,14 +140,11 @@ function Channels({
                   onClick={() => changeChannel(channel)}
                 >
                   #{channel.name}
-                  {notifications &&
-                    notifications.forEach(notification => {
-                      if (notification.id === channel.id) {
-                        return (
-                          <p className="text-warning">{notification.count}</p>
-                        );
-                      }
-                    })}
+                  {getNotificationsCount(channel) && (
+                    <span className="text-danger">
+                      {getNotificationsCount(channel)}
+                    </span>
+                  )}
                 </a>
               ))}
           </div>
