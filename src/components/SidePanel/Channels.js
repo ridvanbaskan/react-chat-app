@@ -45,9 +45,10 @@ class Channels extends React.Component {
     const firstChannel = this.state.allChannels[0];
     if (this.state.firstLoad && this.state.allChannels.length > 0) {
       this.props.setCurrentChannel(firstChannel);
-      this.setState({ firstLoad: false });
+      this.setActiveChannel(firstChannel);
       this.setState({ channel: firstChannel });
     }
+    this.setState({ firstLoad: false });
   };
 
   addNotificationListener = channelId => {
@@ -85,10 +86,15 @@ class Channels extends React.Component {
   };
 
   changeChannel = channel => {
+    this.setActiveChannel(channel);
     this.clearNotifications();
     this.props.setCurrentChannel(channel);
     this.props.setPrivateChannel(false);
     this.setState({ channel: channel });
+  };
+
+  setActiveChannel = channel => {
+    this.setState({ activeChannel: channel.id });
   };
 
   clearNotifications = () => {
