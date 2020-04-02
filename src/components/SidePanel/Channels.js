@@ -1,112 +1,126 @@
 import React from 'react';
-import firebase, { firestore } from '../../firebase/firebase.utils';
+import firebase from '../../firebase/firebase.utils';
 import { connect } from 'react-redux';
 import { selectCurrentChannel } from '../../redux/SidePanel/sidePanel.selectors';
-import { selectChannels } from '../../redux/user/user.selectors';
 import {
   setModal,
   setCurrentChannel,
   setPrivateChannel
 } from '../../redux/SidePanel/sidePanel.actions';
-import { fetchCollectionsStartAsync } from '../../redux/user/user.actions';
 import './Channel.styles.css';
-import WithSpinner from '../WithSpinner/WithSpinner';
 
-function Channels({
-  setModal,
-  fetchCollectionsStartAsync,
-  allChannels,
-  setCurrentChannel,
-  currentChannel,
-  setPrivateChannel
-}) {
-  const [channel, setChannel] = React.useState(null);
-  const [notifications, setNotifications] = React.useState([]);
-  const [firstLoad, setFirstLoad] = React.useState(true);
+class Channels extends React.Component {
+  state = {
+    channelsRef: firebase.database().ref('channels'),
+    messagesRef: firebase.database().ref('messages'),
+    allChannels: [],
+    firstLoad: true,
+    notifications: [],
+    channel: null
+  };
 
-  if (channel && currentChannel) {
-    firestore
-      .collection('channels')
-      .doc(channel.id)
-      .collection('messages')
-      .onSnapshot(snapShot => {
+  componentDidMount() {
+    let loadedChannels = [];
+    this.state.channelsRef.on('child_added', snap => {
+      loadedChannels.push(snap.val());
+      this.setState({ allChannels: loadedChannels }, () =>
+        this.setFirstChannel()
+      );
+      this.addNotificationListener(snap.key);
+    });
+  }
+
+  componentWillUnmount() {
+    this.removeListeners();
+  }
+
+  removeListeners = () => {
+    this.state.channelsRef.off();
+    this.state.channels.forEach(channel => {
+      this.state.messagesRef.child(channel.id).off();
+    });
+  };
+
+  setFirstChannel = () => {
+    const firstChannel = this.state.allChannels[0];
+    if (this.state.firstLoad && this.state.allChannels.length > 0) {
+      this.props.setCurrentChannel(firstChannel);
+      this.setState({ firstLoad: false });
+      this.setState({ channel: firstChannel });
+    }
+  };
+
+  addNotificationListener = channelId => {
+    const { messagesRef, notifications } = this.state;
+    const { currentChannel } = this.props;
+    messagesRef.child(channelId).on('value', snap => {
+      if (this.state.channel) {
         let lastTotal = 0;
+
         let index = notifications.findIndex(
-          notification => notification.id === channel.id
+          notification => notification.id === channelId
         );
-        console.log(index);
-        console.log(lastTotal);
+
         if (index !== -1) {
-          if (channel.id !== currentChannel.id) {
+          if (channelId !== currentChannel.id) {
             lastTotal = notifications[index].total;
 
-            if (snapShot.docChanges().length - lastTotal > 0) {
-              notifications[index].count =
-                snapShot.docChanges().length - lastTotal;
+            if (snap.numChildren() - lastTotal > 0) {
+              notifications[index].count = snap.numChildren() - lastTotal;
             }
           }
-          notifications[index].lastKnownTotal = snapShot.docChanges().length;
+          notifications[index].lastKnownTotal = snap.numChildren();
         } else {
           notifications.push({
-            id: channel.id,
-            total: snapShot.docChanges().length,
-            lastKnownTotal: snapShot.docChanges().length,
+            id: channelId,
+            total: snap.numChildren(),
+            lastKnownTotal: snap.numChildren(),
             count: 0
           });
         }
-        setNotifications(notifications);
-      });
-  }
 
-  React.useEffect(() => {
-    fetchCollectionsStartAsync();
-  }, [fetchCollectionsStartAsync]);
-
-  const changeChannel = channel => {
-    clearNotifications();
-    setCurrentChannel(channel);
-    setPrivateChannel(false);
-    setChannel(channel);
-  };
-
-  const clearNotifications = () => {
-    let index = notifications.findIndex(
-      notification => notification.id === channel.id
-    );
-    if (index !== -1) {
-      let updatedNotifications = [...notifications];
-      updatedNotifications[index].total = notifications[index].lastKnownTotal;
-      updatedNotifications[index].count = 0;
-      setNotifications(updatedNotifications);
-    }
-  };
-
-  const getNotificationsCount = channel => {
-    let count = 0;
-    if (channel) {
-      notifications.forEach(notification => {
-        if (notification.id === channel.id) {
-          count = notification.count;
-        }
-      });
-    }
-    if (count > 0) {
-      return count;
-    }
-  };
-  console.log(getNotificationsCount());
-
-  if (allChannels) {
-    const setFirstChannel = () => {
-      const firstChannel = allChannels[0];
-      if (firstLoad && allChannels.length > 0) {
-        setCurrentChannel(firstChannel);
-        setFirstLoad(false);
-        setChannel(firstChannel);
+        this.setState({ notifications });
       }
-    };
-    setFirstChannel();
+    });
+  };
 
+  changeChannel = channel => {
+    this.clearNotifications();
+    this.props.setCurrentChannel(channel);
+    this.props.setPrivateChannel(false);
+    this.setState({ channel: channel });
+  };
+
+  clearNotifications = () => {
+    let index = this.state.notifications.findIndex(
+      notification => notification.id === this.state.channel.id
+    );
+
+    if (index !== -1) {
+      let updatedNotifications = [...this.state.notifications];
+      updatedNotifications[index].total = this.state.notifications[
+        index
+      ].lastKnownTotal;
+      updatedNotifications[index].count = 0;
+      this.setState({ notifications: updatedNotifications });
+    }
+  };
+
+  getNotificationCount = channel => {
+    let count = 0;
+
+    this.state.notifications.forEach(notification => {
+      if (notification.id === channel.id) {
+        count = notification.count;
+      }
+    });
+
+    if (count > 0) return count;
+  };
+
+  render() {
+    const { setModal, currentChannel } = this.props;
+    const { allChannels } = this.state;
     return (
       <React.Fragment>
         <div className="row">
@@ -137,12 +151,12 @@ function Channels({
                       ? 'text-light'
                       : null
                   }`}
-                  onClick={() => changeChannel(channel)}
+                  onClick={() => this.changeChannel(channel)}
                 >
                   #{channel.name}
-                  {getNotificationsCount(channel) && (
-                    <span className="text-danger">
-                      {getNotificationsCount(channel)}
+                  {this.getNotificationCount(channel) && (
+                    <span className="text-light ml-2 bg-danger px-2">
+                      {this.getNotificationCount(channel)}
                     </span>
                   )}
                 </a>
@@ -151,19 +165,15 @@ function Channels({
         </div>
       </React.Fragment>
     );
-  } else {
-    return <WithSpinner />;
   }
 }
 const mapStateToProps = state => ({
-  allChannels: selectChannels(state),
   currentChannel: selectCurrentChannel(state),
   isLoading: state.user.isLoading
 });
 
 const mapDispatchToProps = dispatch => ({
   setModal: () => dispatch(setModal()),
-  fetchCollectionsStartAsync: () => dispatch(fetchCollectionsStartAsync()),
   setCurrentChannel: channel => dispatch(setCurrentChannel(channel)),
   setPrivateChannel: isPrivateChannel =>
     dispatch(setPrivateChannel(isPrivateChannel))

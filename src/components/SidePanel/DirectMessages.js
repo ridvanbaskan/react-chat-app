@@ -66,7 +66,6 @@ function DirectMessages({ currentUser, setCurrentChannel, setPrivateChannel }) {
       user.uid < currentUser.uid
         ? `${user.uid}${currentUser.uid}`
         : `${currentUser.uid}${user.uid}`;
-    console.log(channelId);
     const channelData = {
       name: user.name,
       id: channelId

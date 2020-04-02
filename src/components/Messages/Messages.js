@@ -18,6 +18,9 @@ function Messages({
   percentUploaded,
   isPrivateChannel
 }) {
+  var messagesRef = firebase.database().ref('messages');
+
+  var privateMessagesRef = firebase.database().ref('privateMessages');
   var expression = /[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)?/gi;
   var regex = new RegExp(expression);
   const [message, setMessage] = React.useState('');
@@ -28,6 +31,7 @@ function Messages({
   const [isExecuted, setIsExecuted] = React.useState(true);
   const [searchResults, setSearchResults] = React.useState([]);
   const [isSearching, setIsSearching] = React.useState(false);
+  const [listeners, setListeners] = React.useState([]);
 
   const handleChange = e => {
     setMessage(e.target.value);
@@ -44,7 +48,6 @@ function Messages({
           mess.message.content.toLowerCase().includes(searchTerm.toLowerCase())
         ) {
           acc.push(mess.message);
-          console.log(mess.message.content);
         }
         return acc;
       }, []);
@@ -56,17 +59,11 @@ function Messages({
 
   React.useEffect(() => {
     if (currentChannel) {
-      const collectionRef = firestore
-        .collection('channels')
-        .doc(currentChannel.id)
-        .collection(isPrivateChannel ? 'privateMessages' : 'messages');
-
-      collectionRef.onSnapshot(snapShot => {
-        const collectionsMap = snapShot.docs.map(doc => {
-          const data = doc.data();
-          return data;
-        });
-        setCurrentMessages(collectionsMap);
+      let loadedMessages = [];
+      const ref = isPrivateChannel ? privateMessagesRef : messagesRef;
+      ref.child(currentChannel.id).on('child_added', snap => {
+        loadedMessages.push(snap.val());
+        setCurrentMessages(loadedMessages);
       });
     }
   }, [currentChannel]);
@@ -74,13 +71,13 @@ function Messages({
   const sendMessage = () => {
     if (message) {
       setLoading(true);
-      firestore
-        .collection('channels')
-        .doc(currentChannel.id)
-        .collection(isPrivateChannel ? 'privateMessages' : 'messages')
-        .add({
+
+      (isPrivateChannel ? privateMessagesRef : messagesRef)
+        .child(currentChannel.id)
+        .push()
+        .set({
           message: {
-            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
             user: {
               id: currentUser.uid,
               name: currentUser.displayName,
@@ -163,7 +160,7 @@ function Messages({
                         </h6>
                         <small className="text-muted ">
                           {mes.timestamp
-                            ? moment(mes.timestamp.toDate()).fromNow()
+                            ? moment(mes.timestamp).fromNow()
                             : null}
                         </small>
                       </div>
@@ -183,36 +180,39 @@ function Messages({
             : currentMessages &&
               currentMessages.map(mes => {
                 return (
-                  <div
-                    key={mes.message.content}
-                    className="messages-content d-flex mb-2"
-                  >
-                    <span>
-                      <img src={mes.message.user.avatar} alt="" />
-                    </span>
-                    <span className="divider mx-2" />
-                    <span className="d-flex flex-column">
-                      <div className="d-flex">
-                        <h6 className="mr-2 mb-2 font-weight-bold">
-                          {mes.message.user.name}
-                        </h6>
-                        <small className="text-muted ">
-                          {mes.message.timestamp
-                            ? moment(mes.message.timestamp.toDate()).fromNow()
-                            : null}
-                        </small>
-                      </div>
-                      {mes.message.content.match(regex) ? (
-                        <img
-                          className="upload-photo"
-                          src={mes.message.content}
-                          alt=""
-                        />
-                      ) : (
-                        <p className="user ">{mes.message.content}</p>
-                      )}
-                    </span>
-                  </div>
+                  console.log(mes.message.id),
+                  (
+                    <div
+                      key={mes.message.content}
+                      className="messages-content d-flex mb-2"
+                    >
+                      <span>
+                        <img src={mes.message.user.avatar} alt="" />
+                      </span>
+                      <span className="divider mx-2" />
+                      <span className="d-flex flex-column">
+                        <div className="d-flex">
+                          <h6 className="mr-2 mb-2 font-weight-bold">
+                            {mes.message.user.name}
+                          </h6>
+                          <small className="text-muted ">
+                            {mes.message.timestamp
+                              ? moment(mes.message.timestamp).fromNow()
+                              : null}
+                          </small>
+                        </div>
+                        {mes.message.content.match(regex) ? (
+                          <img
+                            className="upload-photo"
+                            src={mes.message.content}
+                            alt=""
+                          />
+                        ) : (
+                          <p className="user ">{mes.message.content}</p>
+                        )}
+                      </span>
+                    </div>
+                  )
                 );
               })}
         </div>

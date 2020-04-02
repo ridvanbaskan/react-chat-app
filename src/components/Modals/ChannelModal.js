@@ -1,5 +1,5 @@
 import React from 'react';
-import firebase, { firestore } from '../../firebase/firebase.utils';
+import firebase from '../../firebase/firebase.utils';
 
 export default function ChannelModal({ closeModal }) {
   const [channelName, setChannelName] = React.useState('');
@@ -14,17 +14,30 @@ export default function ChannelModal({ closeModal }) {
 
   const handleSubmit = async e => {
     e.preventDefault();
-    await firestore.collection('channels').add({
+    var channelsRef = firebase.database().ref('channels');
+    const key = channelsRef.push().key;
+
+    const newChannel = {
+      id: key,
       name: channelName,
       details: channelDetails,
       createdBy: {
         name: firebase.auth().currentUser.displayName,
         avatar: firebase.auth().currentUser.photoURL
       }
-    });
+    };
 
-    setChannelName('');
-    setChannelDetails('');
+    await channelsRef
+      .child(key)
+      .update(newChannel)
+      .then(() => {
+        setChannelName('');
+        setChannelDetails('');
+        console.log('channel added');
+      })
+      .catch(err => {
+        console.error(err);
+      });
   };
   return (
     <div className="channel-modal">

@@ -23,15 +23,16 @@ function FileModal({
   percentUploaded,
   isPrivateChannel
 }) {
+  var messagesRef = firebase.database().ref('messages');
+  var privateMessagesRef = firebase.database().ref('privateMessages');
   const [file, setFile] = React.useState(null);
   const [authorized] = React.useState(['image/jpeg', 'image/png']);
 
   const sendFileMessage = fileUrl => {
-    firestore
-      .collection('channels')
-      .doc(currentChannel.id)
-      .collection(isPrivateChannel ? 'privateMessages' : 'messages')
-      .add({
+    (isPrivateChannel ? privateMessagesRef : messagesRef)
+      .child(currentChannel.id)
+      .push()
+      .set({
         message: {
           timestamp: firebase.firestore.FieldValue.serverTimestamp(),
           user: {
