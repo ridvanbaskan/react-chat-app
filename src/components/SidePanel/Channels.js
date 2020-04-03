@@ -19,23 +19,24 @@ class Channels extends React.Component {
     channel: this.props.currentChannel
   };
 
-  static getDerivedStateFromProps(props, state) {
-    if (props.currentChannel !== state.channel) {
-      return {
-        channel: props.currentChannel
-      };
-    }
-  }
+  // static getDerivedStateFromProps(props, state) {
+  //   if (props.currentChannel !== state.channel) {
+  //     return {
+  //       channel: props.currentChannel
+  //     };
+  //   }
+  // }
 
-  componentDidUpdate(prevProps, prevState) {
-    if (prevProps.currentChannel !== this.props.currentChannel) {
-      this.state.channelsRef.on('child_added', snap => {
-        this.addNotificationListener(snap.key);
-      });
-    }
-  }
+  // componentDidUpdate(prevProps, prevState) {
+  //   if (prevProps.currentChannel !== this.props.currentChannel) {
+  //     this.state.channelsRef.on('child_added', snap => {
+  //       this.addNotificationListener(snap.key);
+  //     });
+  //   }
+  // }
 
-  componentDidMount() {
+  async componentDidMount() {
+    await this.props.currentChannel;
     let loadedChannels = [];
     this.state.channelsRef.on('child_added', snap => {
       loadedChannels.push(snap.val());
@@ -60,7 +61,7 @@ class Channels extends React.Component {
   setFirstChannel = () => {
     const firstChannel = this.state.allChannels[0];
     if (this.state.firstLoad && this.state.allChannels.length > 0) {
-      // this.props.setCurrentChannel(firstChannel);
+      this.props.setCurrentChannel(firstChannel);
       this.setActiveChannel(firstChannel);
       this.setState({ channel: firstChannel });
     }
@@ -72,21 +73,21 @@ class Channels extends React.Component {
     const { currentChannel } = this.props;
 
     messagesRef.child(channelId).on('value', snap => {
-      if (channel && currentChannel) {
+      if (channel) {
         let lastTotal = 0;
 
         let index = notifications.findIndex(
           notification => notification.id === channelId
         );
 
-        console.group('notification');
-        console.log('Notifications', notifications);
-        console.log('Notifaction from channel', channelId);
-        console.log('notification to channel', currentChannel);
-        console.groupEnd();
+        // console.group('notification');
+        // console.log('Notifications', notifications);
+        // console.log('Notifaction from channel', channelId);
+        // console.log('notification to channel', currentChannel);
+        // console.groupEnd();
 
         if (index !== -1) {
-          if (channelId !== currentChannel.id) {
+          if (channelId !== channel.id) {
             lastTotal = notifications[index].total;
 
             if (snap.numChildren() - lastTotal > 0) {
@@ -150,7 +151,7 @@ class Channels extends React.Component {
   render() {
     const { setModal, currentChannel } = this.props;
     const { allChannels } = this.state;
-    console.log(currentChannel);
+    console.log(this.state.channel);
     return (
       <React.Fragment>
         <div className="row">
