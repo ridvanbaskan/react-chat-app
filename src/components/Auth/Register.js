@@ -53,7 +53,6 @@ function Register() {
           displayName: userName,
           photoURL: `http://gravatar.com/avatar/${md5(user.email)}`
         });
-        console.log(user.uid);
 
         firestore
           .collection('users')

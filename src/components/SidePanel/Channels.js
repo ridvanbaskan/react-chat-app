@@ -36,7 +36,7 @@ class Channels extends React.Component {
 
   removeListeners = () => {
     this.state.channelsRef.off();
-    this.state.channels.forEach(channel => {
+    this.state.allChannels.forEach(channel => {
       this.state.messagesRef.child(channel.id).off();
     });
   };
@@ -52,10 +52,10 @@ class Channels extends React.Component {
   };
 
   addNotificationListener = channelId => {
-    const { messagesRef, notifications } = this.state;
+    const { messagesRef, notifications, channel } = this.state;
     const { currentChannel } = this.props;
     messagesRef.child(channelId).on('value', snap => {
-      if (this.state.channel) {
+      if (channel && currentChannel) {
         let lastTotal = 0;
 
         let index = notifications.findIndex(

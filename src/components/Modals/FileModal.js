@@ -1,16 +1,11 @@
 import React from 'react';
 import { selectCurrentUser } from '../../redux/user/user.selectors';
-import {
-  selectCurrentChannel,
-  selectIsPrivateChannel
-} from '../../redux/SidePanel/sidePanel.selectors';
+//prettier-ignore
+import {selectCurrentChannel,selectIsPrivateChannel} from '../../redux/SidePanel/sidePanel.selectors';
 import { connect } from 'react-redux';
-import firebase, { firestore } from '../../firebase/firebase.utils';
-import {
-  uploadState,
-  percentUploaded,
-  closeUploadState
-} from '../../redux/message/message.actions';
+import firebase from '../../firebase/firebase.utils';
+//prettier-ignore
+import {uploadState,percentUploaded,closeUploadState} from '../../redux/message/message.actions';
 import mime from 'mime-types';
 import { v4 as uuidv4 } from 'uuid';
 

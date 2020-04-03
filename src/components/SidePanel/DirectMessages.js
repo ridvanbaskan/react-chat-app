@@ -97,6 +97,7 @@ function DirectMessages({ currentUser, setCurrentChannel, setPrivateChannel }) {
                 <div className="col mx-auto mt-2">
                   <div className="ml-5 text-secondary">
                     <a
+                      href="#/"
                       className={`is-active ${
                         isActive === user.uid ? 'active' : ''
                       }`}
