@@ -29,7 +29,9 @@ class Channels extends React.Component {
 
   componentDidUpdate(prevProps, prevState) {
     if (prevProps.currentChannel !== this.props.currentChannel) {
-      this.addNotificationListener(snap.key);
+      this.state.channelsRef.on('child_added', snap => {
+        this.addNotificationListener(snap.key);
+      });
     }
   }
 
@@ -40,6 +42,7 @@ class Channels extends React.Component {
       this.setState({ allChannels: loadedChannels }, () =>
         this.setFirstChannel()
       );
+      this.addNotificationListener(snap.key);
     });
   }
 
