@@ -5,7 +5,7 @@ import { selectCurrentChannel } from '../../redux/SidePanel/sidePanel.selectors'
 import {
   setModal,
   setCurrentChannel,
-  setPrivateChannel
+  setPrivateChannel,
 } from '../../redux/SidePanel/sidePanel.actions';
 import './Channel.styles.css';
 
@@ -16,7 +16,7 @@ class Channels extends React.Component {
     allChannels: [],
     firstLoad: true,
     notifications: [],
-    channel: this.props.currentChannel
+    channel: this.props.currentChannel,
   };
 
   // static getDerivedStateFromProps(props, state) {
@@ -38,7 +38,7 @@ class Channels extends React.Component {
   async componentDidMount() {
     await this.props.currentChannel;
     let loadedChannels = [];
-    this.state.channelsRef.on('child_added', snap => {
+    this.state.channelsRef.on('child_added', (snap) => {
       loadedChannels.push(snap.val());
       this.setState({ allChannels: loadedChannels }, () =>
         this.setFirstChannel()
@@ -53,7 +53,7 @@ class Channels extends React.Component {
 
   removeListeners = () => {
     this.state.channelsRef.off();
-    this.state.allChannels.forEach(channel => {
+    this.state.allChannels.forEach((channel) => {
       this.state.messagesRef.child(channel.id).off();
     });
   };
@@ -68,26 +68,26 @@ class Channels extends React.Component {
     this.setState({ firstLoad: false });
   };
 
-  addNotificationListener = channelId => {
+  addNotificationListener = (channelId) => {
     const { messagesRef, notifications, channel } = this.state;
     const { currentChannel } = this.props;
 
-    messagesRef.child(channelId).on('value', snap => {
+    messagesRef.child(channelId).on('value', (snap) => {
       if (channel) {
         let lastTotal = 0;
 
         let index = notifications.findIndex(
-          notification => notification.id === channelId
+          (notification) => notification.id === channelId
         );
 
-        // console.group('notification');
-        // console.log('Notifications', notifications);
-        // console.log('Notifaction from channel', channelId);
-        // console.log('notification to channel', currentChannel);
-        // console.groupEnd();
+        console.group('notification');
+        console.log('Notifications', notifications);
+        console.log('Notifaction from channel', channelId);
+        console.log('notification to channel', currentChannel);
+        console.groupEnd();
 
         if (index !== -1) {
-          if (channelId !== channel.id) {
+          if (channelId === channel.id) {
             lastTotal = notifications[index].total;
 
             if (snap.numChildren() - lastTotal > 0) {
@@ -100,7 +100,7 @@ class Channels extends React.Component {
             id: channelId,
             total: snap.numChildren(),
             lastKnownTotal: snap.numChildren(),
-            count: 0
+            count: 0,
           });
         }
 
@@ -109,7 +109,7 @@ class Channels extends React.Component {
     });
   };
 
-  changeChannel = channel => {
+  changeChannel = (channel) => {
     this.setActiveChannel(channel);
     this.clearNotifications();
     this.props.setCurrentChannel(channel);
@@ -117,13 +117,13 @@ class Channels extends React.Component {
     this.setState({ channel: channel });
   };
 
-  setActiveChannel = channel => {
+  setActiveChannel = (channel) => {
     this.setState({ activeChannel: channel.id });
   };
 
   clearNotifications = () => {
     let index = this.state.notifications.findIndex(
-      notification => notification.id === this.state.channel.id
+      (notification) => notification.id === this.state.channel.id
     );
 
     if (index !== -1) {
@@ -136,10 +136,10 @@ class Channels extends React.Component {
     }
   };
 
-  getNotificationCount = channel => {
+  getNotificationCount = (channel) => {
     let count = 0;
 
-    this.state.notifications.forEach(notification => {
+    this.state.notifications.forEach((notification) => {
       if (notification.id === channel.id) {
         count = notification.count;
       }
@@ -173,7 +173,7 @@ class Channels extends React.Component {
         <div className="row">
           <div className="col mx-auto mt-3">
             {allChannels.length &&
-              allChannels.map(channel => (
+              allChannels.map((channel) => (
                 <a
                   href="#/"
                   key={channel.id}
@@ -198,16 +198,16 @@ class Channels extends React.Component {
     );
   }
 }
-const mapStateToProps = state => ({
+const mapStateToProps = (state) => ({
   currentChannel: selectCurrentChannel(state),
-  isLoading: state.user.isLoading
+  isLoading: state.user.isLoading,
 });
 
-const mapDispatchToProps = dispatch => ({
+const mapDispatchToProps = (dispatch) => ({
   setModal: () => dispatch(setModal()),
-  setCurrentChannel: channel => dispatch(setCurrentChannel(channel)),
-  setPrivateChannel: isPrivateChannel =>
-    dispatch(setPrivateChannel(isPrivateChannel))
+  setCurrentChannel: (channel) => dispatch(setCurrentChannel(channel)),
+  setPrivateChannel: (isPrivateChannel) =>
+    dispatch(setPrivateChannel(isPrivateChannel)),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(Channels);
