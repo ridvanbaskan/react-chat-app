@@ -55,12 +55,6 @@ class Messages extends React.Component {
     }
   };
 
-  // componentWillReceiveProps(newProps) {
-  //   if (this.props.currentChannel !== newProps.currentChannel) {
-  //     this.addMessages(newProps.currentChannel);
-  //   }
-  // }
-
   static getDerivedStateFromProps(props, state) {
     if (props.currentChannel !== state.channel) {
       return {
@@ -118,7 +112,6 @@ class Messages extends React.Component {
       }
       return acc;
     }, []);
-    console.log(uniqueUserCount);
     this.setState({ numUniqueUsers: uniqueUserCount.length });
   };
 
